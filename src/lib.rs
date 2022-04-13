@@ -1,8 +1,10 @@
+pub use codec::RtuClientCodec;
+pub use codec::RtuServerCodec;
+pub use codec::TcpClientCodec;
+pub use codec::TcpServerCodec;
+pub use frame::Frame;
+pub use util::crc_util;
+
 mod codec;
 mod frame;
-
-pub use codec::ClientCodec;
-pub use codec::ServerCodec;
-
-pub use frame::request::Request;
-pub use frame::response::Response;
+mod util;

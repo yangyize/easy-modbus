@@ -1,4 +1,4 @@
-use super::{Function, Head, Length};
+use super::{Head, Length};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Request {
@@ -10,87 +10,6 @@ pub enum Request {
     WriteSingleHoldingRegister(Head, WriteSingleHoldingRegisterRequest),
     WriteMultipleCoils(Head, WriteMultipleCoilsRequest),
     WriteMultipleHoldingRegisters(Head, WriteMultipleHoldingRegistersRequest),
-}
-
-impl Request {
-    pub fn read_coils(tid: u16, uid: u8, first_address: u16, number: u16) -> Request {
-        let request = ReadCoilsRequest::new(first_address, number);
-        let head = Head::new(tid, uid, Function::ReadCoils, request.len());
-        Request::ReadCoils(head, request)
-    }
-
-    pub fn read_discrete(tid: u16, uid: u8, first_address: u16, number: u16) -> Request {
-        let request = ReadDiscreteInputsRequest::new(first_address, number);
-        let head = Head::new(tid, uid, Function::ReadDiscreteInputs, request.len());
-        Request::ReadDiscreteInputs(head, request)
-    }
-
-    pub fn read_multiple_holding_registers(
-        tid: u16,
-        uid: u8,
-        first_address: u16,
-        number: u16,
-    ) -> Request {
-        let request = ReadMultipleHoldingRegistersRequest::new(first_address, number);
-        let head = Head::new(
-            tid,
-            uid,
-            Function::ReadMultipleHoldingRegisters,
-            request.len(),
-        );
-        Request::ReadMultipleHoldingRegisters(head, request)
-    }
-
-    pub fn read_input_registers(tid: u16, uid: u8, first_address: u16, number: u16) -> Request {
-        let request = ReadInputRegistersRequest::new(first_address, number);
-        let head = Head::new(tid, uid, Function::ReadInputRegisters, request.len());
-        Request::ReadInputRegisters(head, request)
-    }
-
-    pub fn write_single_coil(tid: u16, uid: u8, address: u16, value: u16) -> Request {
-        let request = WriteSingleCoilRequest::new(address, value);
-        let head = Head::new(tid, uid, Function::WriteSingleCoil, request.len());
-        Request::WriteSingleCoil(head, request)
-    }
-
-    pub fn write_single_holding_register(tid: u16, uid: u8, address: u16, value: u16) -> Request {
-        let request = WriteSingleHoldingRegisterRequest::new(address, value);
-        let head = Head::new(
-            tid,
-            uid,
-            Function::WriteSingleHoldingRegister,
-            request.len(),
-        );
-        Request::WriteSingleHoldingRegister(head, request)
-    }
-
-    pub fn write_multiple_coils(
-        tid: u16,
-        uid: u8,
-        address: u16,
-        coils_number: u16,
-        values: Vec<u8>,
-    ) -> Request {
-        let request = WriteMultipleCoilsRequest::new(address, coils_number, values);
-        let head = Head::new(tid, uid, Function::WriteMultipleCoils, request.len());
-        Request::WriteMultipleCoils(head, request)
-    }
-
-    pub fn write_multiple_holding_registers(
-        tid: u16,
-        uid: u8,
-        address: u16,
-        values: Vec<u8>,
-    ) -> Request {
-        let request = WriteMultipleHoldingRegistersRequest::new(address, values);
-        let head = Head::new(
-            tid,
-            uid,
-            Function::WriteMultipleHoldingRegisters,
-            request.len(),
-        );
-        Request::WriteMultipleHoldingRegisters(head, request)
-    }
 }
 
 /// 1
@@ -107,7 +26,7 @@ impl Length for ReadCoilsRequest {
 }
 
 impl ReadCoilsRequest {
-    fn new(first_address: u16, coils_number: u16) -> ReadCoilsRequest {
+    pub(crate) fn new(first_address: u16, coils_number: u16) -> ReadCoilsRequest {
         ReadCoilsRequest {
             first_address,
             coils_number,
@@ -129,7 +48,10 @@ impl Length for ReadDiscreteInputsRequest {
 }
 
 impl ReadDiscreteInputsRequest {
-    fn new(first_address: u16, discrete_inputs_number: u16) -> ReadDiscreteInputsRequest {
+    pub(crate) fn new(
+        first_address: u16,
+        discrete_inputs_number: u16,
+    ) -> ReadDiscreteInputsRequest {
         ReadDiscreteInputsRequest {
             first_address,
             discrete_inputs_number,
@@ -151,7 +73,10 @@ impl Length for ReadMultipleHoldingRegistersRequest {
 }
 
 impl ReadMultipleHoldingRegistersRequest {
-    fn new(first_address: u16, registers_number: u16) -> ReadMultipleHoldingRegistersRequest {
+    pub(crate) fn new(
+        first_address: u16,
+        registers_number: u16,
+    ) -> ReadMultipleHoldingRegistersRequest {
         ReadMultipleHoldingRegistersRequest {
             first_address,
             registers_number,
@@ -173,7 +98,7 @@ impl Length for ReadInputRegistersRequest {
 }
 
 impl ReadInputRegistersRequest {
-    fn new(first_address: u16, registers_number: u16) -> ReadInputRegistersRequest {
+    pub(crate) fn new(first_address: u16, registers_number: u16) -> ReadInputRegistersRequest {
         ReadInputRegistersRequest {
             first_address,
             registers_number,
@@ -195,7 +120,7 @@ impl Length for WriteSingleCoilRequest {
 }
 
 impl WriteSingleCoilRequest {
-    fn new(coil_address: u16, value: u16) -> WriteSingleCoilRequest {
+    pub(crate) fn new(coil_address: u16, value: u16) -> WriteSingleCoilRequest {
         WriteSingleCoilRequest {
             coil_address,
             value,
@@ -217,7 +142,7 @@ impl Length for WriteSingleHoldingRegisterRequest {
 }
 
 impl WriteSingleHoldingRegisterRequest {
-    fn new(register_address: u16, value: u16) -> WriteSingleHoldingRegisterRequest {
+    pub(crate) fn new(register_address: u16, value: u16) -> WriteSingleHoldingRegisterRequest {
         WriteSingleHoldingRegisterRequest {
             register_address,
             value,
@@ -241,7 +166,11 @@ impl Length for WriteMultipleCoilsRequest {
 }
 
 impl WriteMultipleCoilsRequest {
-    fn new(first_address: u16, coils_number: u16, values: Vec<u8>) -> WriteMultipleCoilsRequest {
+    pub(crate) fn new(
+        first_address: u16,
+        coils_number: u16,
+        values: Vec<u8>,
+    ) -> WriteMultipleCoilsRequest {
         WriteMultipleCoilsRequest {
             first_address,
             coils_number,
@@ -267,7 +196,7 @@ impl Length for WriteMultipleHoldingRegistersRequest {
 }
 
 impl WriteMultipleHoldingRegistersRequest {
-    fn new(first_address: u16, values: Vec<u8>) -> WriteMultipleHoldingRegistersRequest {
+    pub(crate) fn new(first_address: u16, values: Vec<u8>) -> WriteMultipleHoldingRegistersRequest {
         WriteMultipleHoldingRegistersRequest {
             first_address,
             registers_number: values.len() as u16 / 2,
