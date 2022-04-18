@@ -1,9 +1,11 @@
-use easy_modbus::{Response, ServerCodec};
-use futures::SinkExt;
 use std::error::Error;
+
+use futures::SinkExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_stream::StreamExt;
 use tokio_util::codec::Framed;
+
+use easy_modbus::{Frame, TcpServerCodec};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -22,13 +24,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn process(stream: TcpStream) -> Result<(), Box<dyn Error>> {
-    let mut transport = Framed::new(stream, ServerCodec);
-
+    let mut transport = Framed::new(stream, TcpServerCodec);
+    let frame = Frame::tcp();
     while let Some(request) = transport.next().await {
         match request {
             Ok(request) => {
                 println!("load request --- {:?}", request);
-                let response = Response::read_coils(0x01, 0x01, vec![0x00, 0x01]);
+                let response = frame.read_coils_response(0x01, vec![0x00, 0x01]);
                 println!("send response --- {:?}", response);
                 transport.send(response).await?;
             }
