@@ -9,6 +9,9 @@
 
 A Rust Modbus library.
 
+## Mirror
+[sourcehut]: https://git.sr.ht/~yangyize/easy-modbus
+
 ## License
 
 This project is licensed under the [MIT license].
