@@ -9,7 +9,7 @@
 
 A Rust Modbus library.
 
-## Mirror
+## Source Code Mirror
 [sourcehut](https://git.sr.ht/~yangyize/easy-modbus)
 
 ## License

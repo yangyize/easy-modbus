@@ -9,7 +9,7 @@ use easy_modbus::{Frame, TcpClientCodec};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let addr = "127.0.0.1:8081".to_string();
+    let addr = "127.0.0.1:502".to_string();
     let stream = TcpStream::connect(&addr).await?;
     let mut transport = Framed::new(stream, TcpClientCodec);
     let frame = Frame::tcp();

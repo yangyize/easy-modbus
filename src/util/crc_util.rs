@@ -23,11 +23,13 @@ const CRC_TABLE: [u16; 256] = [
     0x4100, 0x81C1, 0x8081, 0x4040,
 ];
 
-pub(crate) fn check_crc(data: &[u8], crc: u16) -> bool {
+/// Verify buffer and CRC
+pub fn check_crc(data: &[u8], crc: u16) -> bool {
     compute_crc(data) == crc
 }
 
-pub(crate) fn compute_crc(data: &[u8]) -> u16 {
+/// A cyclic redundancy check (CRC) Calculator.
+pub fn compute_crc(data: &[u8]) -> u16 {
     let mut crc: u16 = 0xFFFF;
     for datum in data {
         crc = (crc >> 8) ^ CRC_TABLE[(crc ^ *datum as u16) as usize & 0xFF];

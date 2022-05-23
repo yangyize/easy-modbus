@@ -9,7 +9,7 @@ use easy_modbus::{Frame, TcpServerCodec};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let addr = "127.0.0.1:8081".to_string();
+    let addr = "127.0.0.1:502".to_string();
     let server = TcpListener::bind(&addr).await?;
     println!("Listening on: {}", addr);
 
