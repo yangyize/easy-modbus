@@ -190,7 +190,12 @@ impl Frame {
     ///
     /// ```
     /// use easy_modbus::Frame;
-    /// let request = Frame::tcp().write_single_holding_register_request(0x0B, 0x0004, 0xABCD);
+    /// let request = Frame::tcp().write_multiple_coils_request(
+    ///     0x0B,
+    ///     0x001B,
+    ///     0x0009,
+    ///     vec![0x4D, 0x01]
+    /// );
     /// ```
     pub fn write_multiple_coils_request(
         &self,
@@ -215,7 +220,11 @@ impl Frame {
     ///
     /// ```
     /// use easy_modbus::Frame;
-    /// let request = Frame::tcp().write_single_holding_register_request(0x0B, 0x0004, 0xABCD);
+    /// let request = Frame::tcp().write_multiple_holding_registers_request(
+    ///     0x0B,
+    ///     0x0012,
+    ///     vec![0x0B, 0x0A, 0xC1, 0x02],
+    /// );
     /// ```
     pub fn write_multiple_holding_registers_request(
         &self,
@@ -229,6 +238,19 @@ impl Frame {
         Request::WriteMultipleHoldingRegisters(head, request_body)
     }
 
+    /// Create a read coils response (Function Code: 0x01)
+    ///
+    /// * `unit_id` -  Server address
+    /// * `values` - Coil input values, Values of each coil input is binary (0 for off, 1 for on).
+    /// First requested coil input is as least significant bit of first byte in reply. If number of
+    /// coils inputs is not a multiple of 8, most significant bits of last byte will be stuffed zeros.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().read_coils_response(0x0B, vec![0xCD, 0x6B, 0xB2, 0x7F]);
+    /// ```
     pub fn read_coils_response(&self, unit_id: u8, values: Vec<u8>) -> Response {
         let function = Function::ReadCoils;
         let response_body = ReadCoilsResponse::new(values);
@@ -236,6 +258,17 @@ impl Frame {
         Response::ReadCoils(head, response_body)
     }
 
+    /// Create a read coils response (Function Code: 0x01)
+    ///
+    /// * `unit_id` -  Server address
+    /// * `values` - Discrete input values
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().read_discrete_response(0x0B, vec![0xAC, 0xDB, 0xFB, 0x0D]);
+    /// ```
     pub fn read_discrete_response(&self, unit_id: u8, values: Vec<u8>) -> Response {
         let function = Function::ReadDiscreteInputs;
         let response_body = ReadDiscreteInputsResponse::new(values);
