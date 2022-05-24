@@ -5,7 +5,7 @@ use tokio::net::TcpStream;
 use tokio_stream::StreamExt;
 use tokio_util::codec::Framed;
 
-use easy_modbus::{Frame, TcpClientCodec};
+use easy_modbus::{Frame, codec::TcpClientCodec};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

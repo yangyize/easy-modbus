@@ -179,7 +179,7 @@ impl WriteSingleHoldingRegisterResponse {
     }
 }
 
-/// Function Code `0x15`
+/// Function Code `0x0F`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WriteMultipleCoilsResponse {
     /// Address of the first coil
@@ -204,7 +204,7 @@ impl WriteMultipleCoilsResponse {
     }
 }
 
-/// Function Code `0x16`
+/// Function Code `0x10`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WriteMultipleHoldingRegistersResponse {
     /// Address of first written holding register

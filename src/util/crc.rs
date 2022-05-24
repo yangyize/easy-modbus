@@ -1,3 +1,16 @@
+//! Utility for cyclic redundancy check (CRC) calculate.
+//!
+//! # Examples
+//! ```
+//! use easy_modbus::util::crc::{check, compute};
+//! let data = vec![0x0B, 0x01, 0x00, 0x1D, 0x00, 0x1F];
+//! let crc = compute(&data);
+//! assert_eq!(crc, 0xED6E);
+//!
+//! let b = check(&data, 0xED6E);
+//! assert_eq!(b, true);
+//! ```
+
 const CRC_TABLE: [u16; 256] = [
     0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241, 0xC601, 0x06C0, 0x0780, 0xC741,
     0x0500, 0xC5C1, 0xC481, 0x0440, 0xCC01, 0x0CC0, 0x0D80, 0xCD41, 0x0F00, 0xCFC1, 0xCE81, 0x0E40,
@@ -24,12 +37,26 @@ const CRC_TABLE: [u16; 256] = [
 ];
 
 /// Verify buffer and CRC
-pub fn check_crc(data: &[u8], crc: u16) -> bool {
-    compute_crc(data) == crc
+///
+/// # Examples
+/// ```
+/// use easy_modbus::util::crc::check;
+/// let data = vec![0x0B, 0x01, 0x00, 0x1D, 0x00, 0x1F];
+/// let foo = check(&data, 0xED6E);
+/// ```
+pub fn check(data: &[u8], crc: u16) -> bool {
+    compute(data) == crc
 }
 
-/// A cyclic redundancy check (CRC) Calculator.
-pub fn compute_crc(data: &[u8]) -> u16 {
+/// A CRC Calculator.
+///
+/// # Examples
+/// ```
+/// use easy_modbus::util::crc::compute;
+/// let data = vec![0x0B, 0x01, 0x00, 0x1D, 0x00, 0x1F];
+/// let crc = compute(&data);
+/// ```
+pub fn compute(data: &[u8]) -> u16 {
     let mut crc: u16 = 0xFFFF;
     for datum in data {
         crc = (crc >> 8) ^ CRC_TABLE[(crc ^ *datum as u16) as usize & 0xFF];
@@ -41,9 +68,9 @@ pub fn compute_crc(data: &[u8]) -> u16 {
 #[test]
 fn test_crc() {
     let data = vec![0x0B, 0x01, 0x00, 0x1D, 0x00, 0x1F];
-    assert_eq!(compute_crc(&data), 0xED6E);
-    assert!(check_crc(&data, 0xED6E));
+    assert_eq!(compute(&data), 0xED6E);
+    assert!(check(&data, 0xED6E));
     let data = vec![0x0B, 0x01, 0x04, 0xCD, 0x6B, 0xB2, 0x7F];
-    assert_eq!(compute_crc(&data), 0x2BE1);
-    assert!(check_crc(&data, 0x2BE1));
+    assert_eq!(compute(&data), 0x2BE1);
+    assert!(check(&data, 0x2BE1));
 }

@@ -11,7 +11,10 @@ pub mod response;
 /// Modbus Frame
 #[derive(Debug)]
 pub struct Frame {
-    protocol: Protocol,
+    /// Modbus protocol version (RTU or TCP)
+    version: Version,
+
+    /// Tid Buffer
     tid_map: Mutex<HashMap<u8, u16>>,
 }
 
@@ -28,7 +31,7 @@ impl Frame {
     /// ```
     pub fn tcp() -> Frame {
         Frame {
-            protocol: Protocol::Tcp,
+            version: Version::Tcp,
             tid_map: Mutex::new(HashMap::new()),
         }
     }
@@ -45,7 +48,7 @@ impl Frame {
     /// ```
     pub fn rtu() -> Frame {
         Frame {
-            protocol: Protocol::Rtu,
+            version: Version::Rtu,
             tid_map: Mutex::new(HashMap::new()),
         }
     }
@@ -258,9 +261,9 @@ impl Frame {
         Response::ReadCoils(head, response_body)
     }
 
-    /// Create a read coils response (Function Code: 0x01)
+    /// Create a read discrete response (Function Code: 0x02)
     ///
-    /// * `unit_id` -  Server address
+    /// * `unit_id` - Server address
     /// * `values` - Discrete input values
     ///
     /// # Examples
@@ -276,6 +279,17 @@ impl Frame {
         Response::ReadDiscreteInputs(head, response_body)
     }
 
+    /// Create a read holding register response (Function Code: 0x03)
+    ///
+    /// * `unit_id` - Server address
+    /// * `values` - Discrete input values
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().read_discrete_response(0x0B, vec![0xAC, 0xDB, 0xFB, 0x0D]);
+    /// ```
     pub fn read_holding_register_response(&self, unit_id: u8, values: Vec<u8>) -> Response {
         let function = Function::ReadMultipleHoldingRegisters;
         let response_body = ReadMultipleHoldingRegistersResponse::new(values);
@@ -283,6 +297,17 @@ impl Frame {
         Response::ReadMultipleHoldingRegisters(head, response_body)
     }
 
+    /// Create a read input register response (Function Code: 0x04)
+    ///
+    /// * `unit_id` - Server address
+    /// * `values` - Register values
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().read_input_register_response(0x01, vec![0x10, 0x2F]);
+    /// ```
     pub fn read_input_register_response(&self, unit_id: u8, values: Vec<u8>) -> Response {
         let function = Function::ReadInputRegisters;
         let response_body = ReadInputRegistersResponse::new(values);
@@ -290,6 +315,17 @@ impl Frame {
         Response::ReadInputRegisters(head, response_body)
     }
 
+    /// Create a write single coil response (Function Code: 0x05)
+    ///
+    /// * `unit_id` - Server address
+    /// * `values` - Register values
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().write_single_coil_response(0x01, 0x00BF, 0x0000);
+    /// ```
     pub fn write_single_coil_response(&self, unit_id: u8, address: u16, value: u16) -> Response {
         let function = Function::WriteSingleCoil;
         let response_body = WriteSingleCoilResponse::new(address, value);
@@ -297,6 +333,18 @@ impl Frame {
         Response::WriteSingleCoil(head, response_body)
     }
 
+    /// Create a write single coil response (Function Code: 0x06)
+    ///
+    /// * `unit_id` - Server address
+    /// * `address` - Address of coil
+    /// * `value` - Value to write. 0 (0x0000) for off, 65,280 (0xFF00) for on.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().write_single_holding_register_response(0x01, 0x0004, 0xFF00);
+    /// ```
     pub fn write_single_holding_register_response(
         &self,
         unit_id: u8,
@@ -309,6 +357,18 @@ impl Frame {
         Response::WriteSingleHoldingRegister(head, response_body)
     }
 
+    /// Create a write multiple coils response (Function Code: 0x0F)
+    ///
+    /// * `unit_id` - Server address
+    /// * `address` - Address of first written holding register
+    /// * `coils_number` - Number of written holding registers
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().write_multiple_coils_response(0x01, 0x001B, 0x0009);
+    /// ```
     pub fn write_multiple_coils_response(
         &self,
         unit_id: u8,
@@ -321,6 +381,18 @@ impl Frame {
         Response::WriteMultipleCoils(head, response_body)
     }
 
+    /// Create a write multiple holding registers response (Function Code: 0x10)
+    ///
+    /// * `unit_id` - Server address
+    /// * `address` - Address of first written holding register
+    /// * `coils_number` - Number of written holding registers
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::Frame;
+    /// let response = Frame::tcp().write_multiple_holding_registers_response(0x01, 0x0012, 0x0002);
+    /// ```
     pub fn write_multiple_holding_registers_response(
         &self,
         unit_id: u8,
@@ -333,6 +405,22 @@ impl Frame {
         Response::WriteMultipleHoldingRegisters(head, response_body)
     }
 
+    /// Create a exception response
+    ///
+    /// * `unit_id` - Server address
+    /// * `function` - Modbus Function enum
+    /// * `exception` - Modbus Exception enum
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use easy_modbus::{Exception, Frame, Function};
+    /// let response = Frame::tcp().exception_response(
+    ///     0x0A,
+    ///     Function::ReadCoils,
+    ///     Exception::IllegalDataAddress,
+    /// );
+    /// ```
     pub fn exception_response(
         &self,
         unit_id: u8,
@@ -344,19 +432,22 @@ impl Frame {
         Response::Exception(head, response_body)
     }
 
+
+    /// Build modbus message head
     fn head(&self, uid: u8, function: Function, body_length: u16, is_exception: bool) -> Head {
         Head::new(
             self.get_tid(uid),
             uid,
             function,
             body_length,
-            self.protocol,
+            self.version,
             is_exception,
         )
     }
 
-    pub fn get_tid(&self, unit_id: u8) -> u16 {
-        if self.protocol == Protocol::Rtu {
+    /// Get tid by uid from tid_map
+    fn get_tid(&self, unit_id: u8) -> u16 {
+        if self.version == Version::Rtu {
             return 0;
         }
 
@@ -376,8 +467,12 @@ impl Frame {
     }
 }
 
+/// Protocol versions
+///
+/// Versions of the Modbus protocol exist for serial ports, and for Ethernet and other protocols
+/// that support the Internet protocol suite. BUT NOW JUST SUPPORT **TCP** AND **RTU**.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Protocol {
+pub enum Version {
     Tcp,
     Rtu,
 }
@@ -386,26 +481,54 @@ pub enum Protocol {
 pub struct Head {
     /// Transaction Identifier
     pub(crate) tid: u16,
+
     /// Protocol Identifier
     pub(crate) pid: u16,
+
     /// Pack length
     pub(crate) length: u16,
+
     /// Server address(Tcp) or Slave address(Rtu)
     pub(crate) uid: u8,
-    /// modbus Function
+
+    /// Modbus Function
     pub(crate) function: Function,
-    /// protocol
-    pub(crate) protocol: Protocol,
-    /// check is exception
+
+    /// Frame version
+    pub(crate) version: Version,
+
+    /// Check is exception
     pub(crate) is_exception: bool,
 }
 
+/// Exception types
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Exception {
+    /// Code 1
+    ///
+    /// Function code received in the query is not recognized or allowed by server
     IllegalFunction,
+
+    /// Code 2
+    ///
+    /// Data address of some or all the required entities are not allowed or do not exist in server
     IllegalDataAddress,
+
+    /// Code 3
+    ///
+    /// Value is not accepted by server
     IllegalDataValue,
+
+    /// Code 5
+    ///
+    /// Unrecoverable error occurred while server was attempting to perform requested action
     SlaveDeviceFailure,
+
+    /// Code 6
+    ///
+    /// Server has accepted request and is processing it, but a long duration of time is required.
+    /// This response is returned to prevent a timeout error from occurring in the client. client
+    /// can next issue a Poll Program Complete message to determine whether processing is completed
     Acknowledge,
 }
 
@@ -446,6 +569,7 @@ impl Exception {
     }
 }
 
+/// Modbus functions
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Function {
     ReadCoils,
@@ -484,7 +608,7 @@ impl Head {
         uid: u8,
         function: Function,
         body_length: u16,
-        protocol: Protocol,
+        version: Version,
         is_exception: bool,
     ) -> Head {
         Head {
@@ -493,7 +617,7 @@ impl Head {
             length: body_length + 2,
             uid,
             function,
-            protocol,
+            version,
             is_exception,
         }
     }
@@ -505,14 +629,14 @@ impl Head {
 
 #[test]
 fn test_head() {
-    let head_l = Head::new(0x01, 0x02, Function::ReadCoils, 4, Protocol::Tcp, false);
+    let head_l = Head::new(0x01, 0x02, Function::ReadCoils, 4, Version::Tcp, false);
     let head_r = Head {
         tid: 0x01,
         pid: 0x00,
         length: 6,
         function: Function::ReadCoils,
         uid: 0x02,
-        protocol: Protocol::Tcp,
+        version: Version::Tcp,
         is_exception: false,
     };
     assert_eq!(head_l, head_r);

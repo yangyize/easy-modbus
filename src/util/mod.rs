@@ -1,1 +1,4 @@
-pub mod crc_util;
+//! Utilities for Easy Modbus.
+
+pub mod crc;
+

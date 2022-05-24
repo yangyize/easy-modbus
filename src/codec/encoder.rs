@@ -4,13 +4,13 @@ use bytes::{BufMut, BytesMut};
 use tokio_util::codec::Encoder;
 
 use crate::codec::{RtuClientCodec, RtuServerCodec, TcpClientCodec};
-use crate::crc_util;
+use crate::util::crc;
 use crate::frame::request::*;
 use crate::frame::response::*;
 use crate::frame::{
     request::ReadCoilsRequest,
     response::{ReadCoilsResponse, Response},
-    Head, Protocol,
+    Head, Version,
 };
 
 use super::TcpServerCodec;
@@ -25,7 +25,7 @@ impl Encoder<Request> for RtuClientCodec {
     ) -> std::result::Result<(), Self::Error> {
         request_to_bytesmut(item, dst);
 
-        dst.put_u16(crc_util::compute_crc(&dst.to_vec()));
+        dst.put_u16(crc::compute(&dst.to_vec()));
 
         Ok(())
     }
@@ -41,7 +41,7 @@ impl Encoder<Response> for RtuServerCodec {
     ) -> std::result::Result<(), Self::Error> {
         response_to_bytesmut(item, dst);
 
-        dst.put_u16(crc_util::compute_crc(&dst.to_vec()));
+        dst.put_u16(crc::compute(&dst.to_vec()));
 
         Ok(())
     }
@@ -231,7 +231,7 @@ impl From<Head> for BytesMut {
             head.function.to_code()
         };
 
-        if head.protocol == Protocol::Tcp {
+        if head.version == Version::Tcp {
             buf.put_u16(head.tid);
             buf.put_u16(head.pid);
             buf.put_u16(head.length);
@@ -326,7 +326,7 @@ mod rtu_client_decoder_test {
     use tokio_util::codec::Encoder;
 
     use crate::frame::Frame;
-    use crate::RtuClientCodec;
+    use crate::codec::RtuClientCodec;
 
     #[test]
     fn read_coils_request_test() {
@@ -447,7 +447,7 @@ mod tcp_client_decoder_test {
     use tokio_util::codec::Encoder;
 
     use crate::frame::Frame;
-    use crate::TcpClientCodec;
+    use crate::codec::TcpClientCodec;
 
     #[test]
     fn read_coils_request_test() {
@@ -579,7 +579,7 @@ mod tcp_server_decoder_test {
     use tokio_util::codec::Encoder;
 
     use crate::frame::{Exception, Function};
-    use crate::{Frame, TcpServerCodec};
+    use crate::{Frame, codec::TcpServerCodec};
 
     #[test]
     fn read_coils_response_test() {
@@ -728,7 +728,7 @@ mod rtu_server_decoder_test {
     use tokio_util::codec::Encoder;
 
     use crate::frame::{Exception, Function};
-    use crate::{Frame, RtuServerCodec};
+    use crate::{Frame, codec::RtuServerCodec};
 
     #[test]
     fn read_coils_response_test() {
