@@ -49,6 +49,7 @@
 //! ```
 //!
 //! A simple Modbus TCP Client:
+//!
 //! ``` rust,no_run
 //! use std::error::Error;
 //!
