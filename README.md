@@ -1,7 +1,10 @@
 # Easy Modbus
+[![Crates.io][crates-badge]][crates-url]
 [![MIT licensed][mit-badge]][mit-url]
 [![Build Status][actions-badge]][actions-url]
 
+[crates-badge]: https://img.shields.io/crates/v/easy-modbus?color=blue
+[crates-url]: https://crates.io/crates/easy-modbus
 [mit-badge]: https://img.shields.io/badge/license-MIT-red.svg
 [mit-url]: https://github.com/yangyize/easy-modbus/blob/main/LICENSE
 [actions-badge]: https://github.com/yangyize/easy-modbus/actions/workflows/main.yml/badge.svg?branch=main
