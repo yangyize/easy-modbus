@@ -1,0 +1,22 @@
+[package]
+name = "easy-modbus"
+version = "0.0.3"
+edition = "2021"
+authors = ["yangyize <yangyize@gmail.com>"]
+license = "MIT"
+description = "A Rust Modbus library"
+readme = "README.md"
+homepage = "https://github.com/yangyize/easy-modbus"
+repository = "https://github.com/yangyize/easy-modbus"
+keywords = ["modbus"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = "1"
+tokio-util = { version = "0.7.0", features = ["codec"] }
+futures = { version = "0.3.0", features = ["thread-pool"]}
+
+[dev-dependencies]
+tokio-stream = { version = "0.1" }
+tokio = { version = "1", features = ["full"] }
