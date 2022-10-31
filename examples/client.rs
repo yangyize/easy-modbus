@@ -14,15 +14,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut transport = Framed::new(stream, TcpClientCodec);
     let frame = Frame::tcp();
     let request = frame.read_coils_request(0x01, 0x02, 0x08);
-
+    println!("{}", request);
     transport.send(request).await?;
     while let Some(response) = transport.next().await {
-        match response {
+        return match response {
             Ok(response) => {
-                println!("{:?}", response);
+                println!("{}", response);
+                Ok(())
             }
             Err(e) => {
-                return Err(e.into());
+                Err(e.into())
             }
         }
     }

@@ -83,6 +83,8 @@
 //! }
 //! ```
 //!
+extern crate core;
+
 pub use frame::Frame;
 pub use frame::Function;
 pub use frame::Exception;

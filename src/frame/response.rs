@@ -1,4 +1,11 @@
-use crate::frame::Exception;
+use std::fmt;
+use std::fmt::Formatter;
+
+use bytes::{BufMut, BytesMut};
+
+use crate::frame::{Exception, Version};
+use crate::frame::Version::Rtu;
+use crate::util::crc;
 
 use super::{Head, Length};
 
@@ -13,6 +20,22 @@ pub enum Response {
     WriteMultipleCoils(Head, WriteMultipleCoilsResponse),
     WriteMultipleHoldingRegisters(Head, WriteMultipleHoldingRegistersResponse),
     Exception(Head, ExceptionResponse),
+}
+
+impl fmt::Display for Response {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut buf = BytesMut::with_capacity(64);
+        response_to_bytesmut(self.clone(), &mut buf);
+        let mut first = true;
+        for byte in buf {
+            if !first {
+                write!(f, " ")?;
+            }
+            write!(f, "{:02X}", byte)?;
+            first = false;
+        }
+        Ok(())
+    }
 }
 
 /// Function Code `0x01`
@@ -246,6 +269,161 @@ impl Length for ExceptionResponse {
 impl ExceptionResponse {
     pub(crate) fn new(exception: Exception) -> Self {
         ExceptionResponse { exception }
+    }
+}
+
+impl From<ReadCoilsResponse> for BytesMut {
+    fn from(response: ReadCoilsResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u8(response.bytes_number);
+        buf.put_slice(response.values.as_slice());
+        buf
+    }
+}
+
+impl From<ReadDiscreteInputsResponse> for BytesMut {
+    fn from(response: ReadDiscreteInputsResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u8(response.bytes_number);
+        buf.put_slice(response.values.as_slice());
+        buf
+    }
+}
+
+impl From<ReadMultipleHoldingRegistersResponse> for BytesMut {
+    fn from(response: ReadMultipleHoldingRegistersResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u8(response.bytes_number);
+        buf.put_slice(response.values.as_slice());
+        buf
+    }
+}
+
+impl From<ReadInputRegistersResponse> for BytesMut {
+    fn from(response: ReadInputRegistersResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u8(response.bytes_number);
+        buf.put_slice(response.values.as_slice());
+        buf
+    }
+}
+
+impl From<WriteSingleCoilResponse> for BytesMut {
+    fn from(response: WriteSingleCoilResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(response.coil_address);
+        buf.put_u16(response.value);
+        buf
+    }
+}
+
+impl From<WriteSingleHoldingRegisterResponse> for BytesMut {
+    fn from(response: WriteSingleHoldingRegisterResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(response.register_address);
+        buf.put_u16(response.value);
+        buf
+    }
+}
+
+impl From<WriteMultipleCoilsResponse> for BytesMut {
+    fn from(response: WriteMultipleCoilsResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(response.first_address);
+        buf.put_u16(response.coils_number);
+        buf
+    }
+}
+
+impl From<WriteMultipleHoldingRegistersResponse> for BytesMut {
+    fn from(response: WriteMultipleHoldingRegistersResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(response.first_address);
+        buf.put_u16(response.registers_number);
+        buf
+    }
+}
+
+impl From<ExceptionResponse> for BytesMut {
+    fn from(response: ExceptionResponse) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u8(response.exception.to_code());
+        buf
+    }
+}
+
+impl From<Head> for BytesMut {
+    fn from(head: Head) -> Self {
+        let mut buf = BytesMut::new();
+
+        let function_code = if head.is_exception {
+            head.function.to_code() + 0x80
+        } else {
+            head.function.to_code()
+        };
+
+        if head.version == Version::Tcp {
+            buf.put_u16(head.tid);
+            buf.put_u16(head.pid);
+            buf.put_u16(head.length);
+        }
+        buf.put_u8(head.uid);
+        buf.put_u8(function_code);
+        buf
+    }
+}
+
+pub(crate) fn response_to_bytesmut(item: Response, dst: &mut BytesMut) {
+    let version;
+    match item {
+        Response::ReadCoils(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::ReadDiscreteInputs(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::ReadMultipleHoldingRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::ReadInputRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::WriteSingleCoil(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::WriteSingleHoldingRegister(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::WriteMultipleCoils(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::WriteMultipleHoldingRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Response::Exception(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+    };
+    if Rtu == version {
+        dst.put_u16(crc::compute(&dst.to_vec()));
     }
 }
 

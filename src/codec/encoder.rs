@@ -1,17 +1,12 @@
 use std::io::{Error, Result};
 
-use bytes::{BufMut, BytesMut};
+use bytes::BytesMut;
 use tokio_util::codec::Encoder;
 
 use crate::codec::{RtuClientCodec, RtuServerCodec, TcpClientCodec};
-use crate::util::crc;
 use crate::frame::request::*;
 use crate::frame::response::*;
-use crate::frame::{
-    request::ReadCoilsRequest,
-    response::{ReadCoilsResponse, Response},
-    Head, Version,
-};
+use crate::frame::response::Response;
 
 use super::TcpServerCodec;
 
@@ -24,9 +19,6 @@ impl Encoder<Request> for RtuClientCodec {
         dst: &mut BytesMut,
     ) -> std::result::Result<(), Self::Error> {
         request_to_bytesmut(item, dst);
-
-        dst.put_u16(crc::compute(&dst.to_vec()));
-
         Ok(())
     }
 }
@@ -40,9 +32,6 @@ impl Encoder<Response> for RtuServerCodec {
         dst: &mut BytesMut,
     ) -> std::result::Result<(), Self::Error> {
         response_to_bytesmut(item, dst);
-
-        dst.put_u16(crc::compute(&dst.to_vec()));
-
         Ok(())
     }
 }
@@ -65,268 +54,13 @@ impl Encoder<Response> for TcpServerCodec {
     }
 }
 
-impl From<ReadCoilsRequest> for BytesMut {
-    fn from(request: ReadCoilsRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.coils_number);
-        buf
-    }
-}
-
-impl From<ReadDiscreteInputsRequest> for BytesMut {
-    fn from(request: ReadDiscreteInputsRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.discrete_inputs_number);
-        buf
-    }
-}
-
-impl From<ReadMultipleHoldingRegistersRequest> for BytesMut {
-    fn from(request: ReadMultipleHoldingRegistersRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.registers_number);
-        buf
-    }
-}
-
-impl From<ReadInputRegistersRequest> for BytesMut {
-    fn from(request: ReadInputRegistersRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.registers_number);
-        buf
-    }
-}
-
-impl From<WriteSingleCoilRequest> for BytesMut {
-    fn from(request: WriteSingleCoilRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.coil_address);
-        buf.put_u16(request.value);
-        buf
-    }
-}
-
-impl From<WriteSingleHoldingRegisterRequest> for BytesMut {
-    fn from(request: WriteSingleHoldingRegisterRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.register_address);
-        buf.put_u16(request.value);
-        buf
-    }
-}
-
-impl From<WriteMultipleCoilsRequest> for BytesMut {
-    fn from(request: WriteMultipleCoilsRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.coils_number);
-        buf.put_u8(request.bytes_number);
-        buf.put_slice(request.values.as_slice());
-        buf
-    }
-}
-
-impl From<WriteMultipleHoldingRegistersRequest> for BytesMut {
-    fn from(request: WriteMultipleHoldingRegistersRequest) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(request.first_address);
-        buf.put_u16(request.registers_number);
-        buf.put_u8(request.bytes_number);
-        buf.put_slice(request.values.as_slice());
-        buf
-    }
-}
-
-impl From<ReadCoilsResponse> for BytesMut {
-    fn from(response: ReadCoilsResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u8(response.bytes_number);
-        buf.put_slice(response.values.as_slice());
-        buf
-    }
-}
-
-impl From<ReadDiscreteInputsResponse> for BytesMut {
-    fn from(response: ReadDiscreteInputsResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u8(response.bytes_number);
-        buf.put_slice(response.values.as_slice());
-        buf
-    }
-}
-
-impl From<ReadMultipleHoldingRegistersResponse> for BytesMut {
-    fn from(response: ReadMultipleHoldingRegistersResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u8(response.bytes_number);
-        buf.put_slice(response.values.as_slice());
-        buf
-    }
-}
-
-impl From<ReadInputRegistersResponse> for BytesMut {
-    fn from(response: ReadInputRegistersResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u8(response.bytes_number);
-        buf.put_slice(response.values.as_slice());
-        buf
-    }
-}
-
-impl From<WriteSingleCoilResponse> for BytesMut {
-    fn from(response: WriteSingleCoilResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(response.coil_address);
-        buf.put_u16(response.value);
-        buf
-    }
-}
-
-impl From<WriteSingleHoldingRegisterResponse> for BytesMut {
-    fn from(response: WriteSingleHoldingRegisterResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(response.register_address);
-        buf.put_u16(response.value);
-        buf
-    }
-}
-
-impl From<WriteMultipleCoilsResponse> for BytesMut {
-    fn from(response: WriteMultipleCoilsResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(response.first_address);
-        buf.put_u16(response.coils_number);
-        buf
-    }
-}
-
-impl From<WriteMultipleHoldingRegistersResponse> for BytesMut {
-    fn from(response: WriteMultipleHoldingRegistersResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u16(response.first_address);
-        buf.put_u16(response.registers_number);
-        buf
-    }
-}
-
-impl From<ExceptionResponse> for BytesMut {
-    fn from(response: ExceptionResponse) -> Self {
-        let mut buf = BytesMut::new();
-        buf.put_u8(response.exception.to_code());
-        buf
-    }
-}
-
-impl From<Head> for BytesMut {
-    fn from(head: Head) -> Self {
-        let mut buf = BytesMut::new();
-
-        let function_code = if head.is_exception {
-            head.function.to_code() + 0x80
-        } else {
-            head.function.to_code()
-        };
-
-        if head.version == Version::Tcp {
-            buf.put_u16(head.tid);
-            buf.put_u16(head.pid);
-            buf.put_u16(head.length);
-        }
-        buf.put_u8(head.uid);
-        buf.put_u8(function_code);
-        buf
-    }
-}
-
-fn request_to_bytesmut(item: Request, dst: &mut BytesMut) {
-    match item {
-        Request::ReadCoils(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::ReadDiscreteInputs(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::ReadMultipleHoldingRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::ReadInputRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::WriteSingleCoil(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::WriteSingleHoldingRegister(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::WriteMultipleCoils(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Request::WriteMultipleHoldingRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-    };
-}
-
-fn response_to_bytesmut(item: Response, dst: &mut BytesMut) {
-    match item {
-        Response::ReadCoils(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::ReadDiscreteInputs(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::ReadMultipleHoldingRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::ReadInputRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::WriteSingleCoil(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::WriteSingleHoldingRegister(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::WriteMultipleCoils(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::WriteMultipleHoldingRegisters(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-        Response::Exception(head, body) => {
-            dst.put(BytesMut::from(head));
-            dst.put(BytesMut::from(body));
-        }
-    }
-}
-
 #[cfg(test)]
-mod rtu_client_decoder_test {
+mod rtu_client_encoder_test {
     use bytes::BytesMut;
     use tokio_util::codec::Encoder;
 
-    use crate::frame::Frame;
     use crate::codec::RtuClientCodec;
+    use crate::frame::Frame;
 
     #[test]
     fn read_coils_request_test() {
@@ -446,8 +180,8 @@ mod tcp_client_decoder_test {
     use bytes::BytesMut;
     use tokio_util::codec::Encoder;
 
-    use crate::frame::Frame;
     use crate::codec::TcpClientCodec;
+    use crate::frame::Frame;
 
     #[test]
     fn read_coils_request_test() {
@@ -578,8 +312,8 @@ mod tcp_server_decoder_test {
     use bytes::BytesMut;
     use tokio_util::codec::Encoder;
 
+    use crate::{codec::TcpServerCodec, Frame};
     use crate::frame::{Exception, Function};
-    use crate::{Frame, codec::TcpServerCodec};
 
     #[test]
     fn read_coils_response_test() {
@@ -727,8 +461,8 @@ mod rtu_server_decoder_test {
     use bytes::BytesMut;
     use tokio_util::codec::Encoder;
 
+    use crate::{codec::RtuServerCodec, Frame};
     use crate::frame::{Exception, Function};
-    use crate::{Frame, codec::RtuServerCodec};
 
     #[test]
     fn read_coils_response_test() {

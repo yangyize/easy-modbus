@@ -1,3 +1,11 @@
+use std::fmt;
+use std::fmt::Formatter;
+
+use bytes::{BufMut, BytesMut};
+
+use crate::frame::Version::Rtu;
+use crate::util::crc;
+
 use super::{Head, Length};
 
 /// Modbus Request
@@ -11,6 +19,22 @@ pub enum Request {
     WriteSingleHoldingRegister(Head, WriteSingleHoldingRegisterRequest),
     WriteMultipleCoils(Head, WriteMultipleCoilsRequest),
     WriteMultipleHoldingRegisters(Head, WriteMultipleHoldingRegistersRequest),
+}
+
+impl fmt::Display for Request {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut buf = BytesMut::with_capacity(64);
+        request_to_bytesmut(self.clone(), &mut buf);
+        let mut first = true;
+        for byte in buf {
+            if !first {
+                write!(f, " ")?;
+            }
+            write!(f, "{:02X}", byte)?;
+            first = false;
+        }
+        Ok(())
+    }
 }
 
 /// Function Code `0x01`
@@ -260,6 +284,131 @@ impl WriteMultipleHoldingRegistersRequest {
             bytes_number: values.len() as u8,
             values,
         }
+    }
+}
+
+impl From<ReadCoilsRequest> for BytesMut {
+    fn from(request: ReadCoilsRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.coils_number);
+        buf
+    }
+}
+
+impl From<ReadDiscreteInputsRequest> for BytesMut {
+    fn from(request: ReadDiscreteInputsRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.discrete_inputs_number);
+        buf
+    }
+}
+
+impl From<ReadMultipleHoldingRegistersRequest> for BytesMut {
+    fn from(request: ReadMultipleHoldingRegistersRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.registers_number);
+        buf
+    }
+}
+
+impl From<ReadInputRegistersRequest> for BytesMut {
+    fn from(request: ReadInputRegistersRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.registers_number);
+        buf
+    }
+}
+
+impl From<WriteSingleCoilRequest> for BytesMut {
+    fn from(request: WriteSingleCoilRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.coil_address);
+        buf.put_u16(request.value);
+        buf
+    }
+}
+
+impl From<WriteSingleHoldingRegisterRequest> for BytesMut {
+    fn from(request: WriteSingleHoldingRegisterRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.register_address);
+        buf.put_u16(request.value);
+        buf
+    }
+}
+
+impl From<WriteMultipleCoilsRequest> for BytesMut {
+    fn from(request: WriteMultipleCoilsRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.coils_number);
+        buf.put_u8(request.bytes_number);
+        buf.put_slice(request.values.as_slice());
+        buf
+    }
+}
+
+impl From<WriteMultipleHoldingRegistersRequest> for BytesMut {
+    fn from(request: WriteMultipleHoldingRegistersRequest) -> Self {
+        let mut buf = BytesMut::new();
+        buf.put_u16(request.first_address);
+        buf.put_u16(request.registers_number);
+        buf.put_u8(request.bytes_number);
+        buf.put_slice(request.values.as_slice());
+        buf
+    }
+}
+
+pub(crate) fn request_to_bytesmut(item: Request, dst: &mut BytesMut) {
+    let version;
+    match item {
+        Request::ReadCoils(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::ReadDiscreteInputs(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::ReadMultipleHoldingRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::ReadInputRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::WriteSingleCoil(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::WriteSingleHoldingRegister(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::WriteMultipleCoils(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+        Request::WriteMultipleHoldingRegisters(head, body) => {
+            version = head.version.clone();
+            dst.put(BytesMut::from(head));
+            dst.put(BytesMut::from(body));
+        }
+    };
+    if Rtu == version {
+        dst.put_u16(crc::compute(&dst.to_vec()));
     }
 }
 
