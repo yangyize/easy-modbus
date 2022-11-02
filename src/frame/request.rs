@@ -94,6 +94,14 @@ impl ReadDiscreteInputsRequest {
             discrete_inputs_number,
         }
     }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_discrete_input_number(&self) -> &u16 {
+        &self.discrete_inputs_number
+    }
 }
 
 /// Function Code `0x03`
@@ -125,6 +133,14 @@ impl ReadMultipleHoldingRegistersRequest {
             registers_number,
         }
     }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_registers_number(&self) -> &u16 {
+        &self.registers_number
+    }
 }
 
 /// Function code `0x04`
@@ -153,6 +169,14 @@ impl ReadInputRegistersRequest {
             registers_number,
         }
     }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_registers_number(&self) -> &u16 {
+        &self.registers_number
+    }
 }
 
 /// Function Code `0x05`
@@ -180,6 +204,14 @@ impl WriteSingleCoilRequest {
             value,
         }
     }
+
+    pub fn get_coil_address(&self) -> &u16 {
+        &self.coil_address
+    }
+
+    pub fn get_value(&self) -> &u16 {
+        &self.value
+    }
 }
 
 /// Function Code `0x06`
@@ -204,6 +236,14 @@ impl WriteSingleHoldingRegisterRequest {
             register_address,
             value,
         }
+    }
+
+    pub fn get_register_address(&self) -> &u16 {
+        &self.register_address
+    }
+
+    pub fn get_value(&self) -> &u16 {
+        &self.value
     }
 }
 
@@ -249,6 +289,14 @@ impl WriteMultipleCoilsRequest {
             values,
         }
     }
+
+    pub fn first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn coils_number(&self) -> &u16 {
+        &self.coils_number
+    }
 }
 
 /// Function Code `0x10`
@@ -284,6 +332,22 @@ impl WriteMultipleHoldingRegistersRequest {
             bytes_number: values.len() as u8,
             values,
         }
+    }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_registers_number(&self) -> &u16 {
+        &self.registers_number
+    }
+
+    pub fn get_bytes_number(&self) -> &u8 {
+        &self.bytes_number
+    }
+
+    pub fn get_values(&self) -> &Vec<u8> {
+        &self.values
     }
 }
 

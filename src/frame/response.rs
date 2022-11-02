@@ -66,6 +66,14 @@ impl ReadCoilsResponse {
             values,
         }
     }
+
+    pub fn get_bytes_number(&self) -> &u8 {
+        &self.bytes_number
+    }
+
+    pub fn get_values(&self) -> &Vec<u8> {
+        &self.values
+    }
 }
 
 /// Function Code `0x02`
@@ -96,6 +104,14 @@ impl ReadDiscreteInputsResponse {
             values,
         }
     }
+
+    pub fn get_bytes_number(&self) -> &u8 {
+        &self.bytes_number
+    }
+
+    pub fn get_values(&self) -> &Vec<u8> {
+        &self.values
+    }
 }
 
 /// Function Code `0x03`
@@ -122,6 +138,14 @@ impl ReadMultipleHoldingRegistersResponse {
             values,
         }
     }
+
+    pub fn get_bytes_number(&self) -> &u8 {
+        &self.bytes_number
+    }
+
+    pub fn get_values(&self) -> &Vec<u8> {
+        &self.values
+    }
 }
 
 /// Function Code `0x04`
@@ -147,6 +171,14 @@ impl ReadInputRegistersResponse {
             bytes_number,
             values,
         }
+    }
+
+    pub fn get_bytes_number(&self) -> &u8 {
+        &self.bytes_number
+    }
+
+    pub fn get_values(&self) -> &Vec<u8> {
+        &self.values
     }
 }
 
@@ -175,6 +207,14 @@ impl WriteSingleCoilResponse {
             value,
         }
     }
+
+    pub fn get_coil_address(&self) -> &u16 {
+        &self.coil_address
+    }
+
+    pub fn get_value(&self) -> &u16 {
+        &self.value
+    }
 }
 
 /// Function Code `0x06`
@@ -200,6 +240,14 @@ impl WriteSingleHoldingRegisterResponse {
             value,
         }
     }
+
+    pub fn get_register_address(&self) -> &u16 {
+        &self.register_address
+    }
+
+    pub fn get_value(&self) -> &u16 {
+        &self.value
+    }
 }
 
 /// Function Code `0x0F`
@@ -224,6 +272,14 @@ impl WriteMultipleCoilsResponse {
             first_address,
             coils_number,
         }
+    }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_coils_number(&self) -> &u16 {
+        &self.coils_number
     }
 }
 
@@ -253,6 +309,14 @@ impl WriteMultipleHoldingRegistersResponse {
             registers_number,
         }
     }
+
+    pub fn get_first_address(&self) -> &u16 {
+        &self.first_address
+    }
+
+    pub fn get_registers_number(&self) -> &u16 {
+        &self.registers_number
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -269,6 +333,10 @@ impl Length for ExceptionResponse {
 impl ExceptionResponse {
     pub(crate) fn new(exception: Exception) -> Self {
         ExceptionResponse { exception }
+    }
+
+    pub fn get_exception(&self) -> &Exception {
+        &self.exception
     }
 }
 

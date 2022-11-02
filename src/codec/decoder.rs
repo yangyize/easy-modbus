@@ -79,8 +79,6 @@ impl Decoder for RtuServerCodec {
             return Ok(None);
         }
 
-        println!("decoder 接收到请求: {:02X}", &src);
-
         let mut data_bytes = BytesMut::new();
         let head_bytes = src.copy_to_bytes(2);
         data_bytes.put_slice(&(head_bytes.to_vec()));
