@@ -4,13 +4,13 @@ use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio_util::codec::Decoder;
 
 use crate::codec::{RtuClientCodec, RtuServerCodec};
-use crate::frame::{
-    Exception,
-    Function,
-    Head, request::{ReadCoilsRequest, Request}, response::{ReadCoilsResponse, Response}, Version,
-};
 use crate::frame::request::*;
 use crate::frame::response::*;
+use crate::frame::{
+    request::{ReadCoilsRequest, Request},
+    response::{ReadCoilsResponse, Response},
+    Exception, Function, Head, Version,
+};
 use crate::util::crc;
 
 use super::{TcpClientCodec, TcpServerCodec};
@@ -20,14 +20,11 @@ impl Decoder for RtuClientCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Response>> {
-        if src.len() < 2 {
+        let (Some(byte_0), Some(byte_1), Some(byte_2)) = (src.get(0), src.get(1), src.get(2))
+        else {
             return Ok(None);
-        }
-
-        let mut data_bytes = BytesMut::new();
-
-        let head_bytes = src.copy_to_bytes(2);
-        data_bytes.put_slice(&(head_bytes.to_vec()));
+        };
+        let head_bytes = Bytes::copy_from_slice([*byte_0, *byte_1].as_slice());
         let mut head = Head::rtu_try_from(head_bytes)?;
 
         let len: usize = {
@@ -38,9 +35,7 @@ impl Decoder for RtuClientCodec {
                     Function::ReadCoils
                     | Function::ReadDiscreteInputs
                     | Function::ReadMultipleHoldingRegisters
-                    | Function::ReadInputRegisters => {
-                        src.get(0).map_or(0, |&bytes_num| bytes_num as usize + 1)
-                    }
+                    | Function::ReadInputRegisters => (*byte_2) as usize + 1,
                     Function::WriteSingleCoil
                     | Function::WriteSingleHoldingRegister
                     | Function::WriteMultipleCoils
@@ -49,16 +44,15 @@ impl Decoder for RtuClientCodec {
             }
         };
 
-        if src.len() < len + 2 {
+        if src.len() < len + 4 {
             return Ok(None);
         }
 
         head.body_length(len as u16);
 
-        let body_bytes = src.copy_to_bytes(len);
-        data_bytes.put_slice(&(body_bytes.to_vec()));
+        let data_bytes = src.copy_to_bytes(len + 2);
+        let body_bytes = Bytes::copy_from_slice(&data_bytes.as_ref()[2..]);
         let response = get_response(body_bytes, head);
-
         let crc = src.get_u16();
         if crc::check(&(data_bytes.to_vec()), crc) {
             return Ok(Some(response));
@@ -121,12 +115,18 @@ impl Decoder for TcpClientCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Response>> {
-        if src.len() < 4 {
+        if src.len() < 8 {
             return Ok(None);
         }
-        let head = Head::tcp_try_from(src.copy_to_bytes(8))?;
+        let head_bytes = Bytes::copy_from_slice(&src.as_ref()[..8]);
+
+        let head = Head::tcp_try_from(head_bytes)?;
         let len = head.length as usize - 2;
-        let response = get_response(src.copy_to_bytes(len), head);
+        if src.len() < 8 + len {
+            return Ok(None);
+        }
+        let datas = Bytes::copy_from_slice(&src.copy_to_bytes(8 + len).as_ref()[8..8 + len]);
+        let response = get_response(datas, head);
         Ok(Some(response))
     }
 }
@@ -459,6 +459,21 @@ mod rtu_client_decoder_test {
     use crate::Frame;
 
     #[test]
+    fn read_coils_response_sub_test() {
+        let mut codec = RtuClientCodec::default();
+        let v: Vec<u8> = vec![0x0B, 0x01, 0x04, 0xCD, 0x6B, 0xB2, 0x7F, 0x2B, 0xE1];
+
+        let mut buf = BytesMut::from(&v[..4]);
+        assert!(codec.decode(&mut buf).unwrap().is_none());
+        buf.extend_from_slice(&v[4..]);
+        let response_l = codec.decode(&mut buf).unwrap().unwrap();
+
+        let frame = Frame::rtu();
+        let response_r = frame.read_coils_response(0x0B, vec![0xCD, 0x6B, 0xB2, 0x7F]);
+        assert_eq!(response_l, response_r);
+    }
+
+    #[test]
     fn read_coils_response_test() {
         let mut codec = RtuClientCodec::default();
         let v: Vec<u8> = vec![0x0B, 0x01, 0x04, 0xCD, 0x6B, 0xB2, 0x7F, 0x2B, 0xE1];
@@ -567,8 +582,23 @@ mod tcp_client_decoder_test {
     use bytes::BytesMut;
     use tokio_util::codec::Decoder;
 
-    use crate::{codec::TcpClientCodec, Frame};
     use crate::frame::{Exception, Function};
+    use crate::{codec::TcpClientCodec, Frame};
+
+    #[test]
+    fn read_coils_response_sub_test() {
+        let mut codec = TcpClientCodec::default();
+        let v: Vec<u8> = vec![
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x05, 0x01, 0x01, 0x02, 0x00, 0x01,
+        ];
+        let mut buf = BytesMut::from(&v[..4]);
+        assert!(codec.decode(&mut buf).unwrap().is_none());
+        buf.extend_from_slice(&v[4..]);
+        let response_l = codec.decode(&mut buf).unwrap().unwrap();
+        let frame = Frame::tcp();
+        let response_r = frame.read_coils_response(0x01, vec![0x00, 0x01]);
+        assert_eq!(response_l, response_r);
+    }
 
     #[test]
     fn read_coils_response_test() {
