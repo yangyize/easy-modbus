@@ -432,7 +432,6 @@ impl Frame {
         Response::Exception(head, response_body)
     }
 
-
     /// Build modbus message head
     fn head(&self, uid: u8, function: Function, body_length: u16, is_exception: bool) -> Head {
         Head::new(
@@ -492,10 +491,10 @@ pub struct Head {
     pub(crate) uid: u8,
 
     /// Modbus Function
-    pub(crate) function: Function,
+    pub function: Function,
 
     /// Frame version
-    pub(crate) version: Version,
+    pub version: Version,
 
     /// Check is exception
     pub(crate) is_exception: bool,
@@ -582,12 +581,12 @@ pub enum Function {
     WriteMultipleHoldingRegisters,
 }
 
-trait Length {
+pub trait Length {
     fn len(&self) -> u16;
 }
 
 impl Function {
-    pub(crate) fn to_code(&self) -> u8 {
+    pub fn to_code(&self) -> u8 {
         use Function::*;
         match self {
             ReadCoils => 0x01,

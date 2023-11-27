@@ -437,7 +437,7 @@ impl TryFrom<u8> for Function {
     }
 }
 
-fn get_function(function_code: u8) -> Result<(Function, bool)> {
+pub fn get_function(function_code: u8) -> Result<(Function, bool)> {
     let function: Function;
     let mut is_exception = false;
     if function_code <= 0x80 {

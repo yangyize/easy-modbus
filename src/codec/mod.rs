@@ -3,6 +3,8 @@
 mod decoder;
 mod encoder;
 
+pub use decoder::get_function;
+
 /// Mutual convert TCP Client frames and buffers.
 #[derive(Debug, Default)]
 pub struct TcpClientCodec;

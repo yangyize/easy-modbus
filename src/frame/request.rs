@@ -57,7 +57,7 @@ impl Length for ReadCoilsRequest {
 }
 
 impl ReadCoilsRequest {
-    pub(crate) fn new(first_address: u16, coils_number: u16) -> ReadCoilsRequest {
+    pub fn new(first_address: u16, coils_number: u16) -> ReadCoilsRequest {
         ReadCoilsRequest {
             first_address,
             coils_number,
@@ -85,10 +85,7 @@ impl Length for ReadDiscreteInputsRequest {
 }
 
 impl ReadDiscreteInputsRequest {
-    pub(crate) fn new(
-        first_address: u16,
-        discrete_inputs_number: u16,
-    ) -> ReadDiscreteInputsRequest {
+    pub fn new(first_address: u16, discrete_inputs_number: u16) -> ReadDiscreteInputsRequest {
         ReadDiscreteInputsRequest {
             first_address,
             discrete_inputs_number,
@@ -124,10 +121,7 @@ impl Length for ReadMultipleHoldingRegistersRequest {
 }
 
 impl ReadMultipleHoldingRegistersRequest {
-    pub(crate) fn new(
-        first_address: u16,
-        registers_number: u16,
-    ) -> ReadMultipleHoldingRegistersRequest {
+    pub fn new(first_address: u16, registers_number: u16) -> ReadMultipleHoldingRegistersRequest {
         ReadMultipleHoldingRegistersRequest {
             first_address,
             registers_number,
@@ -163,7 +157,7 @@ impl Length for ReadInputRegistersRequest {
 }
 
 impl ReadInputRegistersRequest {
-    pub(crate) fn new(first_address: u16, registers_number: u16) -> ReadInputRegistersRequest {
+    pub fn new(first_address: u16, registers_number: u16) -> ReadInputRegistersRequest {
         ReadInputRegistersRequest {
             first_address,
             registers_number,
@@ -198,7 +192,7 @@ impl Length for WriteSingleCoilRequest {
 }
 
 impl WriteSingleCoilRequest {
-    pub(crate) fn new(coil_address: u16, value: u16) -> WriteSingleCoilRequest {
+    pub fn new(coil_address: u16, value: u16) -> WriteSingleCoilRequest {
         WriteSingleCoilRequest {
             coil_address,
             value,
@@ -231,7 +225,7 @@ impl Length for WriteSingleHoldingRegisterRequest {
 }
 
 impl WriteSingleHoldingRegisterRequest {
-    pub(crate) fn new(register_address: u16, value: u16) -> WriteSingleHoldingRegisterRequest {
+    pub fn new(register_address: u16, value: u16) -> WriteSingleHoldingRegisterRequest {
         WriteSingleHoldingRegisterRequest {
             register_address,
             value,
@@ -277,7 +271,7 @@ impl Length for WriteMultipleCoilsRequest {
 }
 
 impl WriteMultipleCoilsRequest {
-    pub(crate) fn new(
+    pub fn new(
         first_address: u16,
         coils_number: u16,
         values: Vec<u8>,
@@ -325,7 +319,7 @@ impl Length for WriteMultipleHoldingRegistersRequest {
 }
 
 impl WriteMultipleHoldingRegistersRequest {
-    pub(crate) fn new(first_address: u16, values: Vec<u8>) -> WriteMultipleHoldingRegistersRequest {
+    pub fn new(first_address: u16, values: Vec<u8>) -> WriteMultipleHoldingRegistersRequest {
         WriteMultipleHoldingRegistersRequest {
             first_address,
             registers_number: values.len() as u16 / 2,
@@ -478,8 +472,8 @@ pub(crate) fn request_to_bytesmut(item: Request, dst: &mut BytesMut) {
 
 #[cfg(test)]
 mod request_test {
-    use crate::frame::Length;
     use crate::frame::request::*;
+    use crate::frame::Length;
 
     #[test]
     fn test_read_coils_request() {
