@@ -44,7 +44,7 @@ impl Frame {
     ///
     /// ```
     /// use easy_modbus::Frame;
-    /// let rut = Frame::rtu();
+    /// let rtu = Frame::rtu();
     /// ```
     pub fn rtu() -> Frame {
         Frame {
@@ -213,7 +213,7 @@ impl Frame {
         Request::WriteMultipleCoils(head, request_body)
     }
 
-    /// Create a write multiple coils request (Function Code: 0x10)
+    /// Create a write multiple holding registers request (Function Code: 0x10)
     ///
     /// * `unit_id` -  Server address
     /// * `address` - Address of first holding registers to write
@@ -333,7 +333,7 @@ impl Frame {
         Response::WriteSingleCoil(head, response_body)
     }
 
-    /// Create a write single coil response (Function Code: 0x06)
+    /// Create a write single holding register response (Function Code: 0x06)
     ///
     /// * `unit_id` - Server address
     /// * `address` - Address of coil
@@ -546,7 +546,7 @@ impl Exception {
     pub(crate) fn from_code(code: u8) -> Option<Exception> {
         use Exception::*;
         let exception = match code {
-            0x01 => IllegalDataValue,
+            0x01 => IllegalFunction,
             0x02 => IllegalDataAddress,
             0x03 => IllegalDataValue,
             0x04 => SlaveDeviceFailure,
