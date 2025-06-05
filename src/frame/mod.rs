@@ -546,7 +546,7 @@ impl Exception {
     pub(crate) fn from_code(code: u8) -> Option<Exception> {
         use Exception::*;
         let exception = match code {
-            0x01 => IllegalDataValue,
+            0x01 => IllegalFunction,
             0x02 => IllegalDataAddress,
             0x03 => IllegalDataValue,
             0x04 => SlaveDeviceFailure,
